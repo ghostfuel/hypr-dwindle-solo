@@ -1,0 +1,11 @@
+[repository]
+name = "hypr-dwindle-solo"
+authors = ["ghostfuel"]
+
+[hypr-dwindle-solo]
+description = "Resize and align solo windows on dwindle workspaces"
+authors = ["ghostfuel"]
+output = "hypr-dwindle-solo.so"
+build = [
+    "make all",
+]
