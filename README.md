@@ -22,18 +22,31 @@ plugin {
 }
 ```
 
-## Building
+## Install
+
+### hyprpm (recommended)
+
+```sh
+hyprpm add https://github.com/ghostfuel/hypr-dwindle-solo
+hyprpm enable hypr-dwindle-solo
+hyprpm reload
+```
+
+To load at startup, add to your Hyprland config:
+
+```ini
+exec-once = hyprpm reload
+```
+
+### Manual
 
 Requires Hyprland headers (`hyprland-headers` or equivalent for your distro).
 
 ```sh
+git clone https://github.com/ghostfuel/hypr-dwindle-solo.git
+cd hypr-dwindle-solo
 make
-```
-
-## Loading
-
-```sh
-hyprctl plugin load /path/to/hypr-dwindle-solo.so
+hyprctl plugin load $PWD/hypr-dwindle-solo.so
 ```
 
 ## License
