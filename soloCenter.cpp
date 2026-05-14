@@ -20,14 +20,12 @@ using namespace Hyprutils::String;
 static std::unordered_map<WORKSPACEID, CBox> g_userAdjustedBox;
 
 static bool isWorkspaceEnabled(WORKSPACEID id) {
-    static auto const PENABLED = HyprlandAPI::getConfigValue(PHANDLE, "plugin:dwindle-solo:enabled_workspaces")->getDataStaticPtr();
-
-    // STRING pattern from CConfigValue<Hyprlang::STRING>::operator*
-    const char* raw = *reinterpret_cast<const Hyprlang::STRING*>(PENABLED);
-    if (!raw || raw[0] == '\0')
+    if (!g_pEnabledWorkspaces)
         return true;
 
-    const std::string enabledStr = raw;
+    const std::string enabledStr = g_pEnabledWorkspaces->value();
+    if (enabledStr.empty())
+        return true;
 
     CVarList vars(enabledStr, 0, ',', true);
     for (const auto& v : vars) {
@@ -45,13 +43,9 @@ namespace DwindleSolo {
 
     // Compute the default solo box from config
     static CBox computeDefaultSoloBox(const CBox& workArea) {
-        static auto const PWIDTH  = HyprlandAPI::getConfigValue(PHANDLE, "plugin:dwindle-solo:solo_width")->getDataStaticPtr();
-        static auto const PHEIGHT = HyprlandAPI::getConfigValue(PHANDLE, "plugin:dwindle-solo:solo_height")->getDataStaticPtr();
-        static auto const PALIGN  = HyprlandAPI::getConfigValue(PHANDLE, "plugin:dwindle-solo:solo_align")->getDataStaticPtr();
-
-        const float soloWidth  = std::clamp(**reinterpret_cast<Hyprlang::FLOAT* const*>(PWIDTH), 0.1f, 1.0f);
-        const float soloHeight = std::clamp(**reinterpret_cast<Hyprlang::FLOAT* const*>(PHEIGHT), 0.1f, 1.0f);
-        const int64_t soloAlign = **reinterpret_cast<Hyprlang::INT* const*>(PALIGN);
+        const float   soloWidth  = std::clamp(static_cast<float>(g_pSoloWidth->value()), 0.1f, 1.0f);
+        const float   soloHeight = std::clamp(static_cast<float>(g_pSoloHeight->value()), 0.1f, 1.0f);
+        const int64_t soloAlign  = g_pSoloAlign->value();
 
         const float newW = workArea.w * soloWidth;
         const float newH = workArea.h * soloHeight;
@@ -147,10 +141,8 @@ namespace DwindleSolo {
         const auto workArea = info.space->workArea();
 
         // Read alignment/height config to determine anchored vs free edges
-        static auto const PALIGN  = HyprlandAPI::getConfigValue(PHANDLE, "plugin:dwindle-solo:solo_align")->getDataStaticPtr();
-        static auto const PHEIGHT = HyprlandAPI::getConfigValue(PHANDLE, "plugin:dwindle-solo:solo_height")->getDataStaticPtr();
-        const int64_t soloAlign = **reinterpret_cast<Hyprlang::INT* const*>(PALIGN);
-        const float soloHeight = std::clamp(**reinterpret_cast<Hyprlang::FLOAT* const*>(PHEIGHT), 0.1f, 1.0f);
+        const int64_t soloAlign  = g_pSoloAlign->value();
+        const float   soloHeight = std::clamp(static_cast<float>(g_pSoloHeight->value()), 0.1f, 1.0f);
 
         // Determine free edges: a free edge is one NOT flush with the work area boundary.
         // align 0=center (free left+right), 1=left (free right), 2=right (free left)

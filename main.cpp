@@ -12,6 +12,9 @@
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/plugins/HookSystem.hpp>
 #include <hyprland/src/layout/algorithm/Algorithm.hpp>
+#include <hyprland/src/layout/space/Space.hpp>
+
+#include <hyprutils/memory/SharedPtr.hpp>
 
 #include "globals.hpp"
 #include "soloCenter.hpp"
@@ -19,15 +22,15 @@
 static CFunctionHook* g_pRecalcHook = nullptr;
 static CFunctionHook* g_pResizeHook = nullptr;
 
-// CAlgorithm::recalculate() — non-virtual member, no params besides this.
-typedef void (*origRecalculate)(void*);
+// CAlgorithm::recalculate(eRecalculateReason) — non-virtual member.
+typedef void (*origRecalculate)(void*, Layout::eRecalculateReason);
 
 // CAlgorithm::resizeTarget(const Vector2D&, SP<ITarget>, eRectCorner)
 typedef void (*origResizeTarget)(void*, const Vector2D&, SP<Layout::ITarget>, Layout::eRectCorner);
 
-void hkRecalculate(void* thisptr) {
+void hkRecalculate(void* thisptr, Layout::eRecalculateReason reason) {
     // Call original recalculation first (delegates to dwindle)
-    (*(origRecalculate)g_pRecalcHook->m_original)(thisptr);
+    (*(origRecalculate)g_pRecalcHook->m_original)(thisptr, reason);
 
     // Post-process: check for solo window and reposition
     DwindleSolo::postRecalculate(reinterpret_cast<Layout::CAlgorithm*>(thisptr));
@@ -60,11 +63,28 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
         throw std::runtime_error("[hypr-dwindle-solo] Version mismatch");
     }
 
-    // Register config values
-    HyprlandAPI::addConfigValue(PHANDLE, "plugin:dwindle-solo:solo_width", Hyprlang::FLOAT{0.65F});
-    HyprlandAPI::addConfigValue(PHANDLE, "plugin:dwindle-solo:solo_height", Hyprlang::FLOAT{1.0F});
-    HyprlandAPI::addConfigValue(PHANDLE, "plugin:dwindle-solo:solo_align", Hyprlang::INT{0});
-    HyprlandAPI::addConfigValue(PHANDLE, "plugin:dwindle-solo:enabled_workspaces", Hyprlang::STRING{""});
+    // Register config values (V2 — old addConfigValue is deprecated under 0.55 Lua config).
+    using namespace Config::Values;
+    using Hyprutils::Memory::makeShared;
+
+    g_pSoloWidth = makeShared<CFloatValue>(
+        "plugin:dwindle-solo:solo_width", "fraction of work area width", 0.65F,
+        SFloatValueOptions{.min = 0.1F, .max = 1.0F});
+    g_pSoloHeight = makeShared<CFloatValue>(
+        "plugin:dwindle-solo:solo_height", "fraction of work area height", 1.0F,
+        SFloatValueOptions{.min = 0.1F, .max = 1.0F});
+    g_pSoloAlign = makeShared<CIntValue>(
+        "plugin:dwindle-solo:solo_align", "0 = center, 1 = left, 2 = right", 0,
+        SIntValueOptions{.min = 0, .max = 2});
+    g_pEnabledWorkspaces = makeShared<CStringValue>(
+        "plugin:dwindle-solo:enabled_workspaces",
+        "comma-separated workspace IDs, empty = all",
+        std::string(""));
+
+    HyprlandAPI::addConfigValueV2(PHANDLE, g_pSoloWidth);
+    HyprlandAPI::addConfigValueV2(PHANDLE, g_pSoloHeight);
+    HyprlandAPI::addConfigValueV2(PHANDLE, g_pSoloAlign);
+    HyprlandAPI::addConfigValueV2(PHANDLE, g_pEnabledWorkspaces);
 
     // Hook CAlgorithm::recalculate — non-virtual, called after every layout change
     static const auto METHODS = HyprlandAPI::findFunctionsByName(PHANDLE, "recalculate");
