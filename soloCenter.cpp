@@ -7,6 +7,7 @@
 #include <hyprland/src/layout/space/Space.hpp>
 #include <hyprland/src/layout/algorithm/Algorithm.hpp>
 #include <hyprland/src/layout/target/Target.hpp>
+#include <hyprland/src/managers/fullscreen/FullscreenController.hpp>
 
 #include <hyprutils/string/VarList.hpp>
 
@@ -92,7 +93,7 @@ namespace DwindleSolo {
 
         for (auto& tw : info.space->targets()) {
             auto t = tw.lock();
-            if (!t || t->floating() || t->fullscreenMode() != eFullscreenMode::FSMODE_NONE || t->isPseudo())
+            if (!t || t->floating() || Fullscreen::controller()->isFullscreen(t->window()) || t->isPseudo())
                 continue;
             info.target = t;
             break;
