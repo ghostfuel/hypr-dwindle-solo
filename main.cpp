@@ -68,16 +68,16 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     using Hyprutils::Memory::makeShared;
 
     g_pSoloWidth = makeShared<CFloatValue>(
-        "plugin:dwindle-solo:solo_width", "fraction of work area width", 0.65F,
+        "plugin:dwindle_solo:solo_width", "fraction of work area width", 0.65F,
         SFloatValueOptions{.min = 0.1F, .max = 1.0F});
     g_pSoloHeight = makeShared<CFloatValue>(
-        "plugin:dwindle-solo:solo_height", "fraction of work area height", 1.0F,
+        "plugin:dwindle_solo:solo_height", "fraction of work area height", 1.0F,
         SFloatValueOptions{.min = 0.1F, .max = 1.0F});
     g_pSoloAlign = makeShared<CIntValue>(
-        "plugin:dwindle-solo:solo_align", "0 = center, 1 = left, 2 = right", 0,
+        "plugin:dwindle_solo:solo_align", "0 = center, 1 = left, 2 = right", 0,
         SIntValueOptions{.min = 0, .max = 2});
     g_pEnabledWorkspaces = makeShared<CStringValue>(
-        "plugin:dwindle-solo:enabled_workspaces",
+        "plugin:dwindle_solo:enabled_workspaces",
         "comma-separated workspace IDs, empty = all",
         std::string(""));
 
