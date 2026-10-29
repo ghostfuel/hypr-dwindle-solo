@@ -3,7 +3,7 @@
 #include <unordered_map>
 
 #include <hyprland/src/plugins/PluginAPI.hpp>
-#include <hyprland/src/desktop/Workspace.hpp>
+#include <hyprland/src/workspace/HLWorkspace.hpp>
 #include <hyprland/src/layout/space/Space.hpp>
 #include <hyprland/src/layout/algorithm/Algorithm.hpp>
 #include <hyprland/src/layout/target/Target.hpp>
@@ -15,6 +15,8 @@
 #include "soloCenter.hpp"
 
 using namespace Hyprutils::String;
+
+using WORKSPACEID = int64_t;
 
 // Per-workspace: if user resized the solo window, store the adjusted box.
 // Cleared when window count leaves 1.
@@ -83,7 +85,7 @@ namespace DwindleSolo {
         if (!workspace)
             return info;
 
-        info.wsId = workspace->m_id;
+        info.wsId = workspace->numberedID().value_or(-1);
 
         if (algo->tiledTargets() != 1)
             return info;
